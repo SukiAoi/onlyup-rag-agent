@@ -1,0 +1,16 @@
+# ===== Core =====
+chromadb>=0.5.0
+langchain>=0.3.0
+langchain-community>=0.3.0
+langgraph>=0.2.60
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+
+# ===== LLM / Embedding =====
+openai>=1.40.0
+python-dotenv>=1.0.0
+# ONNX runtime for ChromaDB built-in ONNXMiniLM_L6_V2
+onnxruntime>=1.17.0
+
+# ===== Retrieval =====
+rank-bm25>=0.2.2
