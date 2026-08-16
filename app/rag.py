@@ -141,12 +141,12 @@ class RAGEngine:
             rrf_scores[idx] = rrf_scores.get(idx, 0) + 1.0 / (k + rank)
             if idx >= 0:
                 doc_info[idx] = self.all_documents[idx]
-        for text, _dist in semantic_results:
+        for rank, (text, _dist) in enumerate(semantic_results, start=1):
             try:
                 idx = self.all_documents.index(text)
             except ValueError:
                 continue
-            rrf_scores[idx] = rrf_scores.get(idx, 0) + 1.0 / (k + 1)
+            rrf_scores[idx] = rrf_scores.get(idx, 0) + 1.0 / (k + rank)
             doc_info[idx] = text
 
         merged = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)

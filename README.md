@@ -51,14 +51,25 @@ curl -X POST http://127.0.0.1:8000/ask ^
 
 API 交互式文档：<http://127.0.0.1:8000/docs>
 
+## 效果示例 / Demo
+
+浏览器打开 <http://127.0.0.1:8000/docs>，在 Swagger 界面直接提问：
+
+![Swagger UI 截图](docs/swagger.png)
+
+**示例问答**（实际输出见 docs/demo_qa.md）：
+
+> 问：攀爬系统有几个状态？
+> 答：见 docs/demo_qa.md
+
 ## 说明 / Notes
 
 - DeepSeek 目前**没有 Embedding API**，向量化使用 ChromaDB 内置的本地 ONNX 模型（`ONNXMiniLM_L6_V2`），生成与 ReRank 走 DeepSeek。
 - 模型首次运行会下载（~23MB），之后缓存在本地。
-- 踩坑记录见 [PITFALLS.md](../PITFALLS.md)。
+- 踩坑记录见 [PITFALLS.md](PITFALLS.md)。
 
 ## Roadmap / 计划
 
-- [ ] 用 LangChain 重写 ingest（`TextLoader → CharacterTextSplitter → Chroma`）
-- [ ] `create_agent` 接入工具（如计算器）
+- [ ] `create_agent` 接入工具调用（如计算器）—— 按 v3.2 计划 8/17 完成（v1.1）
 - [ ] 更多游戏文档入库
+- [ ] 检索质量评估：不同 chunk_size / Top-K 的命中率对比
