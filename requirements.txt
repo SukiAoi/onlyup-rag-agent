@@ -8,6 +8,8 @@ uvicorn[standard]>=0.30.0
 
 # ===== LLM / Embedding =====
 openai>=1.40.0
+# LangChain 接入 OpenAI 兼容协议（DeepSeek）的工具调用 Agent
+langchain-openai>=0.3.0
 python-dotenv>=1.0.0
 # ONNX runtime for ChromaDB built-in ONNXMiniLM_L6_V2
 onnxruntime>=1.17.0

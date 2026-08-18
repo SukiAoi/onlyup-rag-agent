@@ -65,6 +65,30 @@ except Exception:
 
 ---
 
+## 坑 6：langchain 1.x 不自带 ChatOpenAI
+
+**现象：** `from langchain_openai import ChatOpenAI` 报 ModuleNotFoundError。
+
+**原因：** `create_agent` 是 langchain 核心 API，但 LLM 接入包 `langchain-openai` 需单独安装（DeepSeek 走 OpenAI 兼容协议）。
+
+**解决：**
+```bash
+pip install "langchain-openai>=0.3.0"
+```
+并加入 `requirements.txt`（要求全 ASCII，避免 Windows GBK 下 pip 报错）。
+
+---
+
+## 坑 7：PowerShell 发中文 JSON 给 API 变 `???`
+
+**现象：** 用 `Invoke-RestMethod` 测 `/ask`，服务端日志显示 `收到问题：??????????`，模型答非所问。
+
+**原因：** PowerShell 5.1 默认用 GBK 编码序列化中文，POST 体里的中文变乱码。
+
+**解决：** 测试中文接口用 Python / curl（UTF-8），或在 PowerShell 里先 `[Console]::OutputEncoding` / 显式指定 UTF-8 编码。
+
+---
+
 ## 总结：RAG 最小可行链路
 
 ```

@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from .agent import build_agent
+from .agent import build_agent, invoke_agent
 from .rag import RAGEngine
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
     logger.info("👋 应用关闭")
 
 
-app = FastAPI(title="OnlyUp! RAG Agent", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="OnlyUp! RAG Agent", version="1.1.0", lifespan=lifespan)
 agent = build_agent(rag)
 
 
@@ -38,9 +38,17 @@ class AskRequest(BaseModel):
     question: str
 
 
+class ToolStep(BaseModel):
+    tool: str
+    args: dict
+    result: str
+
+
 class AskResponse(BaseModel):
     answer: str
-    sources: list[str]
+    sources: list[str] = []
+    tools_used: list[str] = []
+    steps: list[ToolStep] = []
 
 
 @app.get("/health")
@@ -51,6 +59,11 @@ def health() -> dict:
 @app.post("/ask", response_model=AskResponse)
 def ask(req: AskRequest) -> AskResponse:
     logger.info("❓ 收到问题：%s", req.question)
-    result = agent.invoke({"question": req.question})
-    logger.info("✅ 来源：%s", result["sources"])
-    return AskResponse(answer=result["answer"], sources=result["sources"])
+    result = invoke_agent(agent, req.question)
+    tools_used = result["tools_used"]
+    logger.info("🛠️ 使用的工具：%s", tools_used or "（无，直接回答）")
+    return AskResponse(
+        answer=result["answer"],
+        tools_used=tools_used,
+        steps=[ToolStep(**s) for s in result["steps"]],
+    )
