@@ -101,14 +101,37 @@ API 交互式文档：<http://127.0.0.1:8000/docs>
 > 问：攀爬系统有几个状态？
 > 答：见 docs/demo_qa.md
 
+## 检索质量评估 / Retrieval Quality
+
+对 **20** 组覆盖 GDD 七大章节的问答做了命中率（Hit Rate）评估：黄金答案块出现在检索 Top-K 中即命中。评估脚本 `eval_retrieval.py` 可复跑，完整报告见 `docs/RETRIEVAL_EVAL_BGE.md`。
+
+| 指标 | ONNX（英文，旧） | **BGE 中文（新）** | 提升 |
+|------|:---:|:---:|:---:|
+| Hit Rate@1 | 40.00% | **60.00%** | +20pp |
+| Hit Rate@3 | 85.00% | **95.00%** | +10pp |
+| Hit Rate@5 | 95.00% | **100.00%** | +5pp |
+| MRR | 0.631 | **0.771** | +0.14 |
+
+> 💡 关键发现：把语义向量模型从英文 `ONNXMiniLM_L6_V2` 换成中文 `BAAI/bge-small-zh-v1.5` 后，**Hit Rate@3 从 85% → 95%，Hit Rate@5 达到 100%**。中文 embedding 对中文文档的语义理解显著更好。而 LLM ReRank 在此语料上是**负优化**（@3 95%→85%），说明候选块在 RRF 融合阶段已足够准确。
+
+复跑评估：
+
+```bash
+# 默认英文 ONNX（无额外依赖）
+.venv\Scripts\python.exe eval_retrieval.py
+# 中文 bge（需 sentence-transformers + torch，首次自动下载模型 ~62MB）
+EMBEDDING_MODEL=bge .venv\Scripts\python.exe eval_retrieval.py --embed bge
+```
+
 ## 说明 / Notes
 
-- DeepSeek 目前**没有 Embedding API**，向量化使用 ChromaDB 内置的本地 ONNX 模型（`ONNXMiniLM_L6_V2`），生成、ReRank 与工具调用走 DeepSeek。
-- 模型首次运行会下载（~23MB），之后缓存在本地。
+- 默认向量化使用 ChromaDB 内置的本地 ONNX 模型（`ONNXMiniLM_L6_V2`，英文，无需 torch）；**中文语义检索推荐 `EMBEDDING_MODEL=bge`**（`BAAI/bge-small-zh-v1.5`，中文，需 `sentence-transformers` + `torch`）。生成、ReRank 与工具调用走 DeepSeek。
+- 两种 embedding 使用独立的 ChromaDB 目录（`chroma_db_onlyup/` 与 `chroma_db_onlyup_bge/`），避免向量维度冲突。
+- 模型首次运行会下载，之后缓存在本地。
 - 踩坑记录见 [PITFALLS.md](PITFALLS.md)。
 
 ## Roadmap / 计划
 
 - [x] `create_agent` 接入工具调用（`query_onlyup_docs` + `calculator`）—— v1.1 ✅
+- [x] 检索质量评估：命中率对比（ONNX vs BGE 中文）—— Hit@3 **95%** / Hit@5 **100%** ✅
 - [ ] 更多游戏文档入库
-- [ ] 检索质量评估：不同 chunk_size / Top-K 的命中率对比

@@ -13,6 +13,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 # ChromaDB 持久化目录（运行时生成）
 CHROMA_DIR = BASE_DIR / "chroma_db_onlyup"
+# 中文 embedding 模型专用库（与英文 ONNX 库隔离，维度不同）
+CHROMA_DIR_BGE = BASE_DIR / "chroma_db_onlyup_bge"
+
+# ---------- Embedding 模型 ----------
+# 可选值：onnx（默认，ONNXMiniLM_L6_V2 英文，无需 torch）
+#         bge（BAAI/bge-small-zh-v1.5 中文，需 sentence-transformers + torch）
+# 生产环境默认用 onnx；要跑中文语义检索对比时设 EMBEDDING_MODEL=bge
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "onnx")
 
 # ---------- LLM（DeepSeek，OpenAI 兼容协议） ----------
 # 注意：DeepSeek 目前没有 Embedding API（见 PITFALLS.md），

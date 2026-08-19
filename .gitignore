@@ -16,6 +16,7 @@ venv/
 data/*
 !data/onlyup_design.txt
 chroma_db_onlyup/
+chroma_db_onlyup_bge/
 chroma_db/
 *.sqlite3
 

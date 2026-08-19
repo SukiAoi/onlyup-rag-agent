@@ -29,9 +29,11 @@ COLLECTION_NAME = "onlyup_docs"
 class RAGEngine:
     """混合检索引擎：ChromaDB 语义 + BM25 关键词 + RRF 融合 + LLM ReRank"""
 
-    def __init__(self, data_dir=None, chroma_dir=None):
+    def __init__(self, data_dir=None, chroma_dir=None, embedding_model=None):
         self.data_dir = data_dir or config.DATA_DIR
         self.chroma_dir = chroma_dir or config.CHROMA_DIR
+        # 可选：'onnx'（默认英文）| 'bge'（中文 BAAI/bge-small-zh-v1.5）
+        self.embedding_model = embedding_model or config.EMBEDDING_MODEL
         # 懒加载（首次使用时初始化）
         self.embedding_fn = None
         self.llm = None
@@ -45,13 +47,24 @@ class RAGEngine:
     def _ensure_models(self) -> None:
         if self._ready:
             return
-        # Embedding：本地 ONNX，避免 DeepSeek 无 Embedding API 的问题
-        try:
-            self.embedding_fn = embedding_functions.ONNXMiniLM_L6_V2()
-            logger.info("✅ 嵌入模型：ONNXMiniLM_L6_V2（本地 ONNX）")
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("⚠️ ONNX 不可用（%s），回退默认嵌入模型", exc)
-            self.embedding_fn = embedding_functions.DefaultEmbeddingFunction()
+        # Embedding：默认本地 ONNX（英文），可切换 bge 中文模型（需 torch）
+        if self.embedding_model == "bge":
+            from chromadb.utils.embedding_functions import (
+                SentenceTransformerEmbeddingFunction,
+            )
+
+            self.embedding_fn = SentenceTransformerEmbeddingFunction(
+                model_name="BAAI/bge-small-zh-v1.5",
+                normalize_embeddings=True,
+            )
+            logger.info("✅ 嵌入模型：BAAI/bge-small-zh-v1.5（中文，sentence-transformers）")
+        else:
+            try:
+                self.embedding_fn = embedding_functions.ONNXMiniLM_L6_V2()
+                logger.info("✅ 嵌入模型：ONNXMiniLM_L6_V2（本地 ONNX）")
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("⚠️ ONNX 不可用（%s），回退默认嵌入模型", exc)
+                self.embedding_fn = embedding_functions.DefaultEmbeddingFunction()
         # LLM：DeepSeek（OpenAI 兼容协议），用于生成与 ReRank
         if not config.DEEPSEEK_API_KEY:
             raise RuntimeError("未设置 DEEPSEEK_API_KEY，请复制 .env.example 为 .env 并填入 Key")
