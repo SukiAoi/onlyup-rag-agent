@@ -112,7 +112,11 @@ API 交互式文档：<http://127.0.0.1:8000/docs>
 | Hit Rate@5 | 95.00% | **100.00%** | +5pp |
 | MRR | 0.631 | **0.771** | +0.14 |
 
-> 💡 关键发现：把语义向量模型从英文 `ONNXMiniLM_L6_V2` 换成中文 `BAAI/bge-small-zh-v1.5` 后，**Hit Rate@3 从 85% → 95%，Hit Rate@5 达到 100%**。中文 embedding 对中文文档的语义理解显著更好。而 LLM ReRank 在此语料上是**负优化**（@3 95%→85%），说明候选块在 RRF 融合阶段已足够准确。
+> 💡 **关键发现（设计权衡）：**
+> 1. **中文 embedding 显著更好**：把语义向量模型从英文 `ONNXMiniLM_L6_V2` 换成中文 `BAAI/bge-small-zh-v1.5` 后，**Hit Rate@3 从 85% → 95%，Hit Rate@5 达到 100%**。中文 embedding 对中文文档的语义理解显著更好。
+> 2. **LLM ReRank 在此语料上是负优化**（@3 95%→85%）：RRF 融合在小语料下已足够准确，ReRank 的重排噪声反而把正确答案挤出 Top-K。适合 ReRank 的是大语料、候选池大的场景；本项目按候选池大小自适应是否触发。
+>
+> 完整的踩坑与权衡分析见 [PITFALLS.md](PITFALLS.md)（坑 8：英文 embedding 处理中文；坑 9：ReRank 负优化）。
 
 复跑评估：
 
